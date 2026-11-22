@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import ScriptView from "@/components/ScriptView";
 import VoicePanel, { type VoiceAudio } from "@/components/VoicePanel";
+import Preview from "@/components/Preview";
 import type { Provider, Script } from "@/lib/prompt";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -254,6 +255,15 @@ export default function ProductForm() {
             audio={voiceAudio}
             onAudio={setVoiceAudio}
           />
+          {voiceAudio?.alignment && (
+            <Preview
+              key={voiceAudio.url} // нова озвучка — прев'ю з початку
+              photoUrl={photoUrl}
+              productName={name.trim()}
+              audioUrl={voiceAudio.url}
+              alignment={voiceAudio.alignment}
+            />
+          )}
         </>
       )}
     </>
