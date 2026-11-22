@@ -13,6 +13,13 @@ export default function Home() {
       </header>
 
       <ProductForm />
+
+      <footer className="mt-12 text-center text-xs text-zinc-500">
+        Voice by{" "}
+        <a href="https://elevenlabs.io" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-300">
+          ElevenLabs
+        </a>
+      </footer>
     </main>
   );
 }

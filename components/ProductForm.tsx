@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import ScriptView from "@/components/ScriptView";
+import VoicePanel, { type VoiceAudio } from "@/components/VoicePanel";
 import type { Provider, Script } from "@/lib/prompt";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -15,6 +16,7 @@ export default function ProductForm() {
   const [script, setScript] = useState<Script | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [voiceAudio, setVoiceAudio] = useState<VoiceAudio | null>(null);
   const [provider, setProvider] = useState<Provider>("gemini");
   const [available, setAvailable] = useState<Record<Provider, boolean>>({ gemini: true, openai: false });
   const fileInput = useRef<HTMLInputElement>(null);
@@ -79,6 +81,7 @@ export default function ProductForm() {
         return;
       }
       setScript(data as Script);
+      setVoiceAudio(null);
     } catch {
       setError("Немає з'єднання з сервером. Перевірте інтернет і спробуйте ще раз.");
     } finally {
@@ -236,7 +239,22 @@ export default function ProductForm() {
       </form>
 
       {script && (
-        <ScriptView script={script} onChange={setScript} onRegenerate={generate} loading={loading} />
+        <>
+          <ScriptView
+            script={script}
+            onChange={(next) => {
+              setScript(next);
+              setVoiceAudio(null); // текст змінився — стара озвучка вже не відповідає
+            }}
+            onRegenerate={generate}
+            loading={loading}
+          />
+          <VoicePanel
+            text={[script.hook, script.body, script.cta].map((t) => t.trim()).join(" ")}
+            audio={voiceAudio}
+            onAudio={setVoiceAudio}
+          />
+        </>
       )}
     </>
   );

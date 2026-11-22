@@ -41,7 +41,7 @@ export default function ScriptView({ script, onChange, onRegenerate, loading }: 
             rows={rows}
             value={script[key]}
             onChange={(e) => onChange({ ...script, [key]: e.target.value })}
-            className="w-full resize-y rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-base leading-relaxed text-zinc-100 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-400/30"
+            className="field-sizing-content min-h-16 w-full resize-y rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-base leading-relaxed text-zinc-100 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-400/30"
           />
         </div>
       ))}
