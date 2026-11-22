@@ -1,9 +1,16 @@
-import { generateScript } from "@/lib/gemini";
+import { generateScriptGemini, isGeminiConfigured } from "@/lib/gemini";
+import { generateScriptOpenAI, isOpenAIConfigured } from "@/lib/openai";
+import type { Provider } from "@/lib/prompt";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 function error(message: string, status: number) {
   return Response.json({ error: message }, { status });
+}
+
+// Які моделі налаштовані — щоб фронт показав лише доступні
+export async function GET() {
+  return Response.json({ gemini: isGeminiConfigured(), openai: isOpenAIConfigured() });
 }
 
 export async function POST(request: Request) {
@@ -14,9 +21,14 @@ export async function POST(request: Request) {
     return error("Некоректний запит.", 400);
   }
 
-  const { name, description } = (body ?? {}) as { name?: unknown; description?: unknown };
+  const { name, description, provider } = (body ?? {}) as {
+    name?: unknown;
+    description?: unknown;
+    provider?: unknown;
+  };
   const cleanName = typeof name === "string" ? name.trim() : "";
   const cleanDescription = typeof description === "string" ? description.trim() : "";
+  const cleanProvider: Provider = provider === "openai" ? "openai" : "gemini";
 
   if (cleanName.length < 2 || cleanName.length > 120) {
     return error("Назва товару має містити від 2 до 120 символів.", 400);
@@ -25,12 +37,20 @@ export async function POST(request: Request) {
     return error("Опис занадто довгий — максимум 1000 символів.", 400);
   }
 
+  const configured = cleanProvider === "openai" ? isOpenAIConfigured() : isGeminiConfigured();
+  if (!configured) {
+    return error("Ця модель зараз недоступна. Оберіть іншу.", 400);
+  }
+
   try {
-    const script = await generateScript(cleanName, cleanDescription);
+    const script =
+      cleanProvider === "openai"
+        ? await generateScriptOpenAI(cleanName, cleanDescription)
+        : await generateScriptGemini(cleanName, cleanDescription);
     return Response.json(script);
   } catch (e) {
-    // У лог — лише тип помилки, без ключів і деталей запиту
-    console.error("script generation failed:", e instanceof Error ? e.message : "unknown");
+    // У лог — лише текст помилки провайдера, без ключів і деталей запиту
+    console.error(`script generation failed (${cleanProvider}):`, e instanceof Error ? e.message : "unknown");
     return error("Не вдалося згенерувати сценарій. Спробуйте ще раз за хвилину.", 502);
   }
 }

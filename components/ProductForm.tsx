@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import ScriptView from "@/components/ScriptView";
-import type { Script } from "@/lib/gemini";
+import type { Provider, Script } from "@/lib/prompt";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE = 5 * 1024 * 1024; // 5 МБ
@@ -15,7 +15,20 @@ export default function ProductForm() {
   const [script, setScript] = useState<Script | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [provider, setProvider] = useState<Provider>("gemini");
+  const [available, setAvailable] = useState<Record<Provider, boolean>>({ gemini: true, openai: false });
   const fileInput = useRef<HTMLInputElement>(null);
+
+  // Які моделі налаштовані на сервері
+  useEffect(() => {
+    fetch("/api/script")
+      .then((r) => r.json())
+      .then((data: Record<Provider, boolean>) => {
+        setAvailable(data);
+        if (!data.gemini && data.openai) setProvider("openai");
+      })
+      .catch(() => {});
+  }, []);
 
   // Звільняємо пам'ять від попереднього blob-URL
   useEffect(() => {
@@ -58,7 +71,7 @@ export default function ProductForm() {
       const res = await fetch("/api/script", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), description: description.trim() }),
+        body: JSON.stringify({ name: name.trim(), description: description.trim(), provider }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data) {
@@ -174,6 +187,35 @@ export default function ProductForm() {
             </p>
           )}
         </div>
+
+        {available.gemini && available.openai && (
+          <div>
+            <span className="mb-2 block text-sm font-medium text-zinc-300">Модель для сценарію</span>
+            <div role="radiogroup" className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/5 p-1">
+              {(
+                [
+                  ["gemini", "Gemini"],
+                  ["openai", "ChatGPT"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={provider === value}
+                  onClick={() => setProvider(value)}
+                  className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition ${
+                    provider === value
+                      ? "bg-violet-500 text-white shadow"
+                      : "text-zinc-400 hover:text-zinc-200"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <button
           type="submit"

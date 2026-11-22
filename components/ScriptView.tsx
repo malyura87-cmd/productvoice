@@ -1,6 +1,6 @@
 "use client";
 
-import type { Script } from "@/lib/gemini";
+import type { Script } from "@/lib/prompt";
 
 type Props = {
   script: Script;
