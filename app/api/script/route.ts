@@ -1,6 +1,7 @@
 import { generateScriptGemini, isGeminiConfigured } from "@/lib/gemini";
 import { generateScriptOpenAI, isOpenAIConfigured } from "@/lib/openai";
 import type { Provider } from "@/lib/prompt";
+import { LIMIT_MESSAGE, checkLimit } from "@/lib/rateLimit";
 
 export const maxDuration = 60;
 
@@ -42,6 +43,9 @@ export async function POST(request: Request) {
     return error("Ця модель зараз недоступна. Оберіть іншу.", 400);
   }
 
+  const limit = await checkLimit(request, "script");
+  if (!limit.ok) return error(LIMIT_MESSAGE, 429);
+
   try {
     const script =
       cleanProvider === "openai"
@@ -50,6 +54,7 @@ export async function POST(request: Request) {
     return Response.json(script);
   } catch (e) {
     // У лог — лише текст помилки провайдера, без ключів і деталей запиту
+    await limit.release(); // невдала генерація не з'їдає ліміт
     console.error(`script generation failed (${cleanProvider}):`, e instanceof Error ? e.message : "unknown");
     return error("Не вдалося згенерувати сценарій. Спробуйте ще раз за хвилину.", 502);
   }

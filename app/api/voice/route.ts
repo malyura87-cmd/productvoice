@@ -1,4 +1,5 @@
 import { getVoices, isElevenLabsConfigured, synthesize } from "@/lib/elevenlabs";
+import { LIMIT_MESSAGE, checkLimit } from "@/lib/rateLimit";
 
 export const maxDuration = 60;
 
@@ -44,10 +45,14 @@ export async function POST(request: Request) {
     );
   }
 
+  const limit = await checkLimit(request, "voice");
+  if (!limit.ok) return error(LIMIT_MESSAGE, 429);
+
   try {
     const result = await synthesize(cleanText, voice.id);
     return Response.json(result);
   } catch (e) {
+    await limit.release(); // невдала озвучка не з'їдає ліміт
     console.error("voice generation failed:", e instanceof Error ? e.message : "unknown");
     return error("Не вдалося озвучити сценарій. Спробуйте ще раз за хвилину.", 502);
   }

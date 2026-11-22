@@ -67,6 +67,24 @@ export default function ProductForm() {
     if (fileInput.current) fileInput.current.value = "";
   }
 
+  async function fillDemo() {
+    setName("Шампунь для блиску волосся Glossa Shine, 250 мл");
+    setDescription(
+      "Шампунь для тьмяного й неслухняного волосся. Делікатно очищає, не пересушуючи шкіру голови. " +
+        "Арганова олія і протеїни шовку розгладжують кутикулу, тож волосся відбиває світло і виглядає блискучим вже після першого миття. " +
+        "Легше розчісується, менше електризується. Без сульфатів SLS/SLES і силіконів. " +
+        "Підходить для щоденного використання і фарбованого волосся. Аромат — біла орхідея і груша.",
+    );
+    setPhotoError(null);
+    if (fileInput.current) fileInput.current.value = "";
+    try {
+      const blob = await fetch("/demo/shampoo.jpg").then((r) => r.blob());
+      setPhotoUrl(URL.createObjectURL(blob));
+    } catch {
+      setPhotoUrl(null);
+    }
+  }
+
   async function generate() {
     if (loading) return;
     setLoading(true);
@@ -105,6 +123,14 @@ export default function ProductForm() {
         onSubmit={handleSubmit}
         className="space-y-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5 shadow-xl sm:p-8"
       >
+        <button
+          type="button"
+          onClick={fillDemo}
+          className="w-full rounded-xl border border-dashed border-violet-400/40 bg-violet-500/10 px-4 py-2.5 text-sm font-medium text-violet-200 transition hover:bg-violet-500/20"
+        >
+          ✨ Спробувати на прикладі
+        </button>
+
         <div>
           <label htmlFor="name" className="mb-2 block text-sm font-medium text-zinc-300">
             Назва товару <span className="text-fuchsia-400">*</span>
