@@ -60,8 +60,10 @@ export async function synthesize(text: string, voiceId: string): Promise<VoiceRe
 
   if (!res.ok || !data.audio_base64) {
     const detail =
-      typeof data.detail === "string" ? data.detail : (data.detail?.status ?? data.detail?.message);
-    throw new Error(`ElevenLabs ${res.status}: ${detail ?? "no audio"}`);
+      typeof data.detail === "string"
+        ? data.detail
+        : [data.detail?.status, data.detail?.message].filter(Boolean).join(" — ");
+    throw new Error(`ElevenLabs ${res.status}: ${detail || "no audio"}`);
   }
 
   return { audioBase64: data.audio_base64, alignment: data.alignment ?? null };
