@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Alignment } from "@/lib/elevenlabs";
 import { buildCues, cueAt } from "@/lib/subtitles";
+import { pickMimeType, renderVideo } from "@/lib/renderVideo";
 
 type Props = {
   photoUrl: string | null;
@@ -18,6 +19,11 @@ export default function Preview({ photoUrl, productName, audioUrl, alignment }: 
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
+
+  const [rendering, setRendering] = useState(false);
+  const [renderProgress, setRenderProgress] = useState(0);
+  const [video, setVideo] = useState<{ url: string; ext: string } | null>(null);
+  const [renderError, setRenderError] = useState<string | null>(null);
 
   const cues = useMemo(() => buildCues(alignment), [alignment]);
   const cue = cueAt(cues, time);
@@ -35,6 +41,48 @@ export default function Preview({ photoUrl, productName, audioUrl, alignment }: 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [playing]);
+
+  // Звільняємо пам'ять від попереднього відео
+  useEffect(() => {
+    return () => {
+      if (video) URL.revokeObjectURL(video.url);
+    };
+  }, [video]);
+
+  function download(url: string, ext: string) {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `productvoice.${ext}`;
+    a.click();
+  }
+
+  async function exportVideo() {
+    if (rendering) return;
+    if (!pickMimeType()) {
+      setRenderError("Цей браузер не вміє записувати відео. Спробуйте Chrome на комп'ютері або Safari на iPhone.");
+      return;
+    }
+    audioRef.current?.pause();
+    setRendering(true);
+    setRenderProgress(0);
+    setRenderError(null);
+    try {
+      const { blob, ext } = await renderVideo({
+        photoUrl,
+        productName,
+        audioUrl,
+        cues,
+        onProgress: setRenderProgress,
+      });
+      const url = URL.createObjectURL(blob);
+      setVideo({ url, ext });
+      download(url, ext);
+    } catch {
+      setRenderError("Не вдалося зібрати відео. Спробуйте ще раз або в іншому браузері.");
+    } finally {
+      setRendering(false);
+    }
+  }
 
   function toggle() {
     const a = audioRef.current;
@@ -116,6 +164,51 @@ export default function Preview({ photoUrl, productName, audioUrl, alignment }: 
             setTime(e.currentTarget.duration);
           }}
         />
+      </div>
+
+      <div className="mx-auto mt-6 w-full max-w-[340px] space-y-3">
+        <button
+          type="button"
+          onClick={exportVideo}
+          disabled={rendering}
+          className="relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-500 px-6 py-3.5 text-base font-semibold text-white shadow-lg transition hover:brightness-110 disabled:cursor-wait"
+        >
+          {rendering && (
+            <span
+              className="absolute inset-y-0 left-0 bg-white/20 transition-[width]"
+              style={{ width: `${renderProgress * 100}%` }}
+            />
+          )}
+          <span className="relative">
+            {rendering
+              ? `Збираю відео… ${Math.round(renderProgress * 100)}%`
+              : video
+                ? "Зібрати відео ще раз"
+                : "Завантажити відео"}
+          </span>
+        </button>
+
+        {rendering && (
+          <p className="text-center text-xs text-zinc-500">
+            Відео записується в реальному часі — не закривайте вкладку і не блокуйте екран.
+          </p>
+        )}
+
+        {video && !rendering && (
+          <a
+            href={video.url}
+            download={`productvoice.${video.ext}`}
+            className="block w-full rounded-xl border border-white/15 px-6 py-3 text-center text-sm font-medium text-zinc-200 transition hover:bg-white/10"
+          >
+            Готово: productvoice.{video.ext} — завантажити ще раз
+          </a>
+        )}
+
+        {renderError && (
+          <p role="alert" className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+            {renderError}
+          </p>
+        )}
       </div>
 
       <div className="mt-6 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center text-sm text-zinc-300">
