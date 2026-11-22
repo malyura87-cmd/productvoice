@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Alignment } from "@/lib/elevenlabs";
 import { buildCues, cueAt } from "@/lib/subtitles";
 import { pickMimeType, renderVideo } from "@/lib/renderVideo";
+import ProgressBar from "@/components/ProgressBar";
 
 type Props = {
   photoUrl: string | null;
@@ -171,22 +172,18 @@ export default function Preview({ photoUrl, productName, audioUrl, alignment }: 
           type="button"
           onClick={exportVideo}
           disabled={rendering}
-          className="relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-500 px-6 py-3.5 text-base font-semibold text-white shadow-lg transition hover:brightness-110 disabled:cursor-wait"
+          className="w-full rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-500 px-6 py-3.5 text-base font-semibold text-white shadow-lg transition hover:brightness-110 disabled:cursor-wait disabled:opacity-40"
         >
-          {rendering && (
-            <span
-              className="absolute inset-y-0 left-0 bg-white/20 transition-[width]"
-              style={{ width: `${renderProgress * 100}%` }}
-            />
-          )}
-          <span className="relative">
-            {rendering
-              ? `Збираю відео… ${Math.round(renderProgress * 100)}%`
-              : video
-                ? "Зібрати відео ще раз"
-                : "Завантажити відео"}
-          </span>
+          {rendering ? "Збираю відео…" : video ? "Зібрати відео ще раз" : "Завантажити відео"}
         </button>
+
+        {rendering && (
+          <ProgressBar
+            label={renderProgress >= 1 ? "Зберігаю файл…" : "Запис відео"}
+            value={renderProgress}
+            hint={duration ? `лишилось ${Math.ceil(duration * (1 - renderProgress))} с` : undefined}
+          />
+        )}
 
         {rendering && (
           <p className="text-center text-xs text-zinc-500">

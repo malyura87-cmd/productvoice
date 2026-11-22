@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Alignment, Voice } from "@/lib/elevenlabs";
+import ProgressBar from "@/components/ProgressBar";
 
 export type VoiceAudio = {
   url: string; // blob-URL mp3
@@ -119,6 +120,10 @@ export default function VoicePanel({ text, audio, onAudio }: Props) {
         )}
         {loading ? "Озвучую…" : audio ? "Озвучити ще раз" : "Озвучити"}
       </button>
+
+      {loading && (
+        <ProgressBar label="Озвучую сценарій…" expectedSeconds={Math.max(4, text.length / 80)} />
+      )}
 
       {tooLong && (
         <p className="text-sm text-amber-300">

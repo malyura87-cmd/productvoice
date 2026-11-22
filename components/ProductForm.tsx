@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "r
 import ScriptView from "@/components/ScriptView";
 import VoicePanel, { type VoiceAudio } from "@/components/VoicePanel";
 import Preview from "@/components/Preview";
+import ProgressBar from "@/components/ProgressBar";
 import type { Provider, Script } from "@/lib/prompt";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -231,6 +232,10 @@ export default function ProductForm() {
           )}
           {loading ? "Пишу сценарій…" : "Згенерувати"}
         </button>
+
+        {loading && !script && (
+          <ProgressBar label="Пишу сценарій…" expectedSeconds={provider === "openai" ? 6 : 8} />
+        )}
 
         {error && (
           <p role="alert" className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">

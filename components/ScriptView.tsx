@@ -1,6 +1,7 @@
 "use client";
 
 import type { Script } from "@/lib/prompt";
+import ProgressBar from "@/components/ProgressBar";
 
 type Props = {
   script: Script;
@@ -45,6 +46,8 @@ export default function ScriptView({ script, onChange, onRegenerate, loading }: 
           />
         </div>
       ))}
+
+      {loading && <ProgressBar label="Пишу новий варіант…" expectedSeconds={7} />}
 
       <button
         type="button"
