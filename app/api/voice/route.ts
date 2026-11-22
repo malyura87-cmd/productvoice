@@ -36,7 +36,13 @@ export async function POST(request: Request) {
 
   // Озвучуємо лише голосами з налаштувань
   const voice = getVoices().find((v) => v.id === voiceId);
-  if (!voice) return error("Оберіть голос.", 400);
+  if (!voice) {
+    // Найчастіше — список голосів змінили, а сторінка ще зі старим
+    return Response.json(
+      { error: "Список голосів оновився — спробуйте ще раз.", voices: getVoices() },
+      { status: 409 },
+    );
+  }
 
   try {
     const result = await synthesize(cleanText, voice.id);

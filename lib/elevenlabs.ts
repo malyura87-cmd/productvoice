@@ -23,7 +23,7 @@ export function getVoices(): Voice[] {
   const raw = process.env.ELEVENLABS_VOICE_IDS ?? "";
   return raw
     .split(",")
-    .map((part) => part.trim())
+    .map((part) => part.trim().replace(/^["']|["']$/g, "").trim())
     .filter(Boolean)
     .slice(0, 3)
     .map((part, i) => {

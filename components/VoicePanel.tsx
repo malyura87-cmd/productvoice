@@ -53,6 +53,11 @@ export default function VoicePanel({ text, audio, onAudio }: Props) {
         body: JSON.stringify({ text, voiceId }),
       });
       const data = await res.json().catch(() => null);
+      if (res.status === 409 && Array.isArray(data?.voices)) {
+        // Підтягуємо актуальний список голосів з сервера
+        setVoices(data.voices);
+        setVoiceId(data.voices[0]?.id ?? "");
+      }
       if (!res.ok || !data?.audioBase64) {
         setError(data?.error ?? "Щось пішло не так. Спробуйте ще раз.");
         return;
